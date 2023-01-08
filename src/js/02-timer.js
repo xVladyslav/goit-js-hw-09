@@ -11,7 +11,7 @@ const minutesCounter = document.querySelector('.timer [data-minutes]');
 const secondsCounter = document.querySelector('.timer [data-seconds]');
 
 let selectedMS = 0;
-let nowMS = 0;
+let intervalId = null;
 
 startBtn.disabled = true;
 
@@ -22,7 +22,7 @@ const options = {
     minuteIncrement: 1,
     onClose(selectedDates) {
         selectedMS = selectedDates[0].getTime();
-        nowMS = Date.now();
+        let nowMS = Date.now();
 
         startBtn.disabled = selectedMS < nowMS;
 
@@ -33,11 +33,9 @@ const options = {
 };
 
 startBtn.addEventListener('click', () => {
-    nowMS = Date.now();
-
     startBtn.disabled = true
 
-    if (selectedMS < nowMS) {
+    if (selectedMS <= Date.now()) {
         Notify.failure('Please choose a date in the future')
 
         return;
@@ -46,12 +44,21 @@ startBtn.addEventListener('click', () => {
     element.disabled = true;
 
     tickTimer();
-    const intervalId = setInterval(tickTimer, 1000)
+    intervalId = setInterval(tickTimer, 1000)
 })
 
 flatpickr(element, options)
 
 function tickTimer() {
+    if (selectedMS <= Date.now()) {
+        clearInterval(intervalId);
+
+        element.disabled = false;
+        startBtn.disabled = false;
+
+        return;
+    }
+
     const counterData = convertMs(selectedMS - Date.now());
 
     daysCounter.textContent = addLeadingZero(counterData.days);
